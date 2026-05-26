@@ -13,7 +13,6 @@ export interface NetworkStatus {
 export interface LoginResult {
   success: boolean;
   message: string;
-  logs: string[];
 }
 
 export interface Credentials {

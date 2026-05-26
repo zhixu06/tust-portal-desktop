@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { LoginResult } from "./interop";
+import type { LoginResult } from "@/native/types";
 
 export async function tryLogin(
   username: string,

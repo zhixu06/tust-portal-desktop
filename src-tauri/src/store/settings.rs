@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use tauri::Manager;
 
-const SETTINGS_FILE: &str = "settings.json";
+pub(crate) const SETTINGS_FILE: &str = "settings.json";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
@@ -16,34 +16,32 @@ impl Default for Settings {
     }
 }
 
-fn settings_path(app_handle: &tauri::AppHandle) -> Option<std::path::PathBuf> {
-    let dir = app_handle.path().app_data_dir().ok()?;
-    Some(dir.join(SETTINGS_FILE))
-}
-
-pub(crate) fn load_settings(app_handle: &tauri::AppHandle) -> Settings {
-    let path = match settings_path(app_handle) {
-        Some(p) => p,
-        None => return Settings::default(),
-    };
+pub(crate) fn read_settings(app_handle: &tauri::AppHandle) -> Option<Settings> {
+    let path = app_handle
+        .path()
+        .app_data_dir()
+        .ok()?
+        .join(SETTINGS_FILE);
     if !path.exists() {
-        return Settings::default();
+        return None;
     }
-    let json = match fs::read_to_string(&path) {
-        Ok(s) => s,
-        Err(_) => return Settings::default(),
-    };
-    serde_json::from_str(&json).unwrap_or_default()
+    let json = fs::read_to_string(&path).ok()?;
+    serde_json::from_str::<Settings>(&json).ok()
 }
 
-pub(crate) fn save_ignore_ssid(app_handle: &tauri::AppHandle, ignore: bool) {
-    let path = match settings_path(app_handle) {
-        Some(p) => p,
-        None => return,
-    };
+pub(crate) fn save_ignore_ssid(
+    app_handle: &tauri::AppHandle,
+    ignore: bool,
+) -> Result<(), String> {
     let settings = Settings { ignore_ssid: ignore };
-    if let Ok(json) = serde_json::to_string(&settings) {
-        let _ = fs::create_dir_all(path.parent().unwrap());
-        let _ = fs::write(&path, json);
-    }
+    let json = serde_json::to_string(&settings).map_err(|e| e.to_string())?;
+    let path = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e: tauri::Error| e.to_string())?
+        .join(SETTINGS_FILE);
+    fs::create_dir_all(path.parent().unwrap()).map_err(|e| e.to_string())?;
+    fs::write(&path, json).map_err(|e| e.to_string())?;
+    tracing::info!(frontend = true, message = "设置已保存");
+    Ok(())
 }

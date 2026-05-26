@@ -2,15 +2,12 @@ use chrono::Local;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::sync::{Arc, Mutex};
-use tauri::State;
 use tracing::field::Field;
 use tracing::Event;
 use tracing_subscriber::layer::Context;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::Layer;
-
-use crate::AppState;
 
 const MAX_LOG_ENTRIES: usize = 200;
 
@@ -24,16 +21,6 @@ pub struct LogEntry {
 
 pub(crate) fn create_log_buffer() -> LogBuffer {
     Arc::new(Mutex::new(Vec::new()))
-}
-
-// Convenience function: emit a tracing event that also gets buffered for the frontend
-pub(crate) fn add_log(message: &str) {
-    tracing::info!(frontend = true, message = %message);
-}
-
-#[tauri::command]
-pub(crate) fn get_logs(state: State<'_, AppState>) -> Vec<LogEntry> {
-    state.logs.lock().unwrap().clone()
 }
 
 // -- Custom tracing layer that captures frontend-marked events --

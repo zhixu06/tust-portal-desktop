@@ -37,7 +37,7 @@ watch(
   line-height: 1.6;
   padding: 10px 12px;
   border-radius: 6px;
-  height: 260px;
+  height: 100%;
   overflow-y: auto;
   border: 1px solid #333;
 }
