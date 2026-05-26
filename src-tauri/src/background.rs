@@ -20,7 +20,7 @@ pub(crate) async fn try_auto_login(creds: &Credentials) -> bool {
 
 pub(crate) fn start_background_loop(app_handle: tauri::AppHandle) {
     tauri::async_runtime::spawn(async move {
-        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(15));
         interval.tick().await;
         loop {
             interval.tick().await;
