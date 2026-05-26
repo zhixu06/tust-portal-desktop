@@ -20,7 +20,7 @@ pub(crate) async fn try_auto_login(creds: &Credentials) -> bool {
 
 pub(crate) fn start_background_loop(app_handle: tauri::AppHandle) {
     tauri::async_runtime::spawn(async move {
-        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(15));
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(20));
         interval.tick().await;
         loop {
             interval.tick().await;
@@ -39,12 +39,6 @@ pub(crate) fn start_background_loop(app_handle: tauri::AppHandle) {
             if ignore_ssid && status.local_ipv4.is_none() {
                 continue;
             }
-
-            tracing::info!(frontend = true, message = %format!(
-                "自动检测: WiFi={}, IP={}",
-                status.wifi_ssid.unwrap_or_default(),
-                status.local_ipv4.unwrap_or_default()
-            ));
 
             if !needs_login().await {
                 continue;
