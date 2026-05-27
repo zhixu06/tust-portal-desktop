@@ -1,37 +1,110 @@
 # TustPortal
 
-天科大校园网自动登录桌面客户端。
+> 使用天科大的校园网/校园宽带总是掉登录怎么办？  
+> 不想每次连接校园网络都要自己点一下登录按钮？  
+> 这个工具可以自动检测网络状态，当需要登录的时候会自动使用预先填好的账号密码帮你登录！
 
-## 环境搭建（Windows 11）
+天科大校园网自动登录桌面客户端，使用 [Tauri 2](https://v2.tauri.app/) + [Vue 3](https://vuejs.org/) 构建，驻留系统托盘，每隔 20 秒检测网络状态并自动登录校园网认证门户。
 
-1. **Visual Studio Build Tools** — Rust 编译需要 MSVC 链接器
-   下载 [Visual Studio Build Tools](https://visualstudio.microsoft.com/zh-hans/downloads/)，安装时勾选「使用 C++ 的桌面开发」工作负载。
+## 功能
 
-2. **Rust** — VS Build Tools 装完后再装，rustup 会自动检测到 MSVC
-   下载 [rustup-init.exe](https://rustup.rs)，保持默认选项安装。
+- **自动登录** — 检测到需要登录时自动提交认证，自带重试机制（最多 3 次）
+- **托盘驻留** — 最小化到系统托盘，右键菜单可触发登录、暂停/恢复、查看日志
+- **手动登录** — 点击托盘图标打开设置窗口，随时手动触发登录
+- **凭据保存** — 用户名和密码加密存储在本地应用数据目录
+- **SSID 检测** — 自动识别 `TUST` 或 `CU_TUST` 开头的 WiFi + `10.x` 网段 IP
+- **忽略 SSID** — 可关闭 SSID 检测，仅依据连通性判断是否需要登录
+- **日志窗口** — 独立日志窗口，实时查看自动登录状态和错误
+- **深色模式** — 自动跟随系统主题
 
-3. **Node.js + pnpm**
-   从 https://nodejs.org 安装 LTS 版本，然后在终端运行：
-   ```bash
-   npm install -g pnpm
-   ```
+## 使用
 
-4. **CLion**
-   安装 CLion 后，在插件市场搜索并安装 **Rust** 插件（由 JetBrains 官方提供）。
-   用 CLion 打开项目目录即可识别 Cargo 项目。
+从 Release 中下载适合你设备的安装包进行安装。
 
-5. **安装依赖 & 运行**
-   在 CLion 内置终端中执行：
-   ```bash
-   pnpm install
-   pnpm tauri dev
-   ```
+### macOS 特殊说明
+
+若在 macOS 上出现如 `应用已损坏` 的提示，请运行：
+```bash
+xattr -cr /Applications/TustPortal.app
+```
 
 ## 开发
 
+### 前置依赖
+
+#### Windows
+
+- [Rust](https://www.rust-lang.org/) (stable)
+- [Node.js](https://nodejs.org/) >= 18
+- [pnpm](https://pnpm.io/)
+- [Visual Studio Build Tools](https://visualstudio.microsoft.com/zh-hans/downloads/)，安装时勾选「使用 C++ 的桌面开发」工作负载
+
+#### macOS
+
+- [Rust](https://www.rust-lang.org/) (stable)
+- [Node.js](https://nodejs.org/) >= 18
+- [pnpm](https://pnpm.io/)
+- macOS 10.15+
+
+### 快速开始
+
 ```bash
-pnpm dev          # 仅启动 Vite 前端开发服务器
-pnpm build        # 构建前端
-pnpm tauri dev    # 启动 Tauri 桌面应用（含热重载）
-pnpm tauri build  # 打包生产版本
+# 安装前端依赖
+pnpm install
+
+# 启动开发模式（热更新）
+pnpm tauri dev
+
+# 仅启动 Vite 前端开发服务器
+pnpm dev
+
+# 构建生产版本
+pnpm tauri build
 ```
+
+### 技术栈
+
+| 层 | 技术 |
+|---|---|
+| 桌面框架 | Tauri 2 |
+| 前端 | Vue 3 + TypeScript + Vite |
+| 后端 | Rust (Tokio, Reqwest) |
+| 包管理 | pnpm + Cargo |
+
+### 项目结构
+
+```
+src/                  # 前端 (Vue 3)
+├── views/            # 页面组件 (设置页、日志页)
+├── components/       # 通用组件
+├── native/           # Tauri invoke 封装
+└── router/           # 前端路由
+src-tauri/src/        # 后端 (Rust)
+├── main.rs           # 入口
+├── lib.rs            # 应用初始化、状态管理
+├── background.rs     # 后台定时自动登录
+├── sign_in.rs        # 登录逻辑 & HTTP 请求
+├── network_info.rs   # 网络状态检测
+├── tray.rs           # 系统托盘菜单
+├── log_system.rs     # 日志系统
+├── js_bridge.rs      # Tauri 命令 bridge
+├── store/            # 凭据 & 设置持久化
+└── platform/         # 平台相关实现 (macOS / Windows)
+```
+
+### 登录流程
+
+1. 每 20 秒检测当前 WiFi SSID 和 IP 地址，判断是否在天科大校园网环境
+2. 检查外网连通性（`connectivitycheck.gstatic.com`），判断是否需要登录
+3. 若需要登录且凭据已保存，自动向认证门户发送登录请求
+4. 登录成功后验证百度连通性，确认网络可用
+
+## 免责声明 / 隐私声明
+
+本软件仅为一个自动登录脚本，当需要登录的时候使用用户预先保存好的账号密码自动登录，本软件不提供账号与密码，也不提供任何付费服务，账号密码保存于本地，不会被上传到云端，同时用户应自行保护您的设备免受恶意软件的攻击。  
+
+使用本软件即代表您同意 [天津科技大学校园网管理办法](http://10.10.102.50/a09.htm?ip=10.0.0.0&vlan=0&ssid=&areaID=)（该链接仅能在校园网内打开）。
+
+## License
+
+[GPL 2](LICENSE)

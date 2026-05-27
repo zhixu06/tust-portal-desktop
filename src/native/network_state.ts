@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { NetworkStatus } from "./interop";
+import type { NetworkStatus } from "@/native/types";
 
 export interface StatusState {
   paused: boolean;

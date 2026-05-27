@@ -2,8 +2,6 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use tauri::Manager;
 
-use crate::log_system::add_log;
-
 pub(crate) const CREDS_FILE: &str = "credentials.json";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -29,35 +27,4 @@ pub(crate) fn read_credentials(app_handle: &tauri::AppHandle) -> Option<Credenti
     }
     let json = fs::read_to_string(&path).ok()?;
     serde_json::from_str::<Credentials>(&json).ok()
-}
-
-#[tauri::command]
-pub(crate) fn save_credentials(
-    username: String,
-    password: String,
-    network_type: String,
-    app_handle: tauri::AppHandle,
-) -> Result<(), String> {
-    let creds = Credentials {
-        username,
-        password,
-        network_type,
-    };
-    let json = serde_json::to_string(&creds).map_err(|e| e.to_string())?;
-    let path = app_handle
-        .path()
-        .app_data_dir()
-        .map_err(|e: tauri::Error| e.to_string())?
-        .join(CREDS_FILE);
-    fs::create_dir_all(path.parent().unwrap()).map_err(|e| e.to_string())?;
-    fs::write(&path, json).map_err(|e| e.to_string())?;
-    add_log("凭据已保存");
-    Ok(())
-}
-
-#[tauri::command]
-pub(crate) fn load_credentials(
-    app_handle: tauri::AppHandle,
-) -> Result<Option<Credentials>, String> {
-    Ok(read_credentials(&app_handle))
 }

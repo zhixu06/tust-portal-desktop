@@ -1,6 +1,5 @@
 use tauri::Manager;
 
-use crate::log_system::add_log;
 use crate::network_info::{check_network_status, needs_login};
 use crate::sign_in;
 use crate::store::credentials::{read_credentials, Credentials};
@@ -21,7 +20,7 @@ pub(crate) async fn try_auto_login(creds: &Credentials) -> bool {
 
 pub(crate) fn start_background_loop(app_handle: tauri::AppHandle) {
     tauri::async_runtime::spawn(async move {
-        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(20));
         interval.tick().await;
         loop {
             interval.tick().await;
@@ -41,22 +40,16 @@ pub(crate) fn start_background_loop(app_handle: tauri::AppHandle) {
                 continue;
             }
 
-            add_log(&format!(
-                "自动检测: WiFi={}, IP={}",
-                status.wifi_ssid.unwrap_or_default(),
-                status.local_ipv4.unwrap_or_default()
-            ));
-
             if !needs_login().await {
                 continue;
             }
 
-            add_log("检测到需要登录");
+            tracing::info!(frontend = true, message = "检测到需要登录");
 
             let creds = match read_credentials(&app_handle) {
                 Some(c) => c,
                 None => {
-                    add_log("自动登录跳过: 未保存凭据");
+                    tracing::info!(frontend = true, message = "自动登录跳过: 未保存凭据");
                     continue;
                 }
             };
@@ -66,7 +59,7 @@ pub(crate) fn start_background_loop(app_handle: tauri::AppHandle) {
             }
 
             if try_auto_login(&creds).await {
-                add_log("自动登录成功");
+                tracing::info!(frontend = true, message = "自动登录成功");
             }
         }
     });
