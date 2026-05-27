@@ -4,7 +4,7 @@ use crate::log_system::add_log;
 use crate::network_info::{get_local_ipv4, get_local_ipv6};
 
 const PORTAL_URL: &str = "http://10.10.102.50:801/eportal/portal/login";
-const USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36";
+const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LoginResult {

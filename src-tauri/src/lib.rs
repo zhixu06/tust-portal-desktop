@@ -126,9 +126,11 @@ pub fn run() {
 
             use tauri::menu::{CheckMenuItemBuilder, MenuBuilder, MenuItemBuilder};
             use tauri::tray::TrayIconBuilder;
-            use tauri::ActivationPolicy;
-
-            app.set_activation_policy(ActivationPolicy::Accessory);
+            #[cfg(target_os = "macos")]
+            {
+                use tauri::ActivationPolicy;
+                app.set_activation_policy(ActivationPolicy::Accessory);
+            }
 
             let trigger_item = MenuItemBuilder::with_id("trigger_login", "触发登录").build(app)?;
             let pause_item = CheckMenuItemBuilder::with_id("pause", "暂停自动登录")
@@ -148,7 +150,7 @@ pub fn run() {
 
             let _tray = TrayIconBuilder::with_id("main-tray")
                 .icon(app.default_window_icon().unwrap().clone())
-                .icon_as_template(true)
+                .icon_as_template(cfg!(target_os = "macos"))
                 .tooltip("天科大校园网自动登录")
                 .menu(&menu)
                 .on_menu_event(|app, event| {
@@ -193,9 +195,9 @@ pub fn run() {
 
             background::start_background_loop(app.handle().clone());
 
-            // Destroy the initial hidden window — recreated on demand via tray
+            // Keep the initial window hidden — shown on demand via tray
             if let Some(window) = app.get_webview_window("main") {
-                let _ = window.close();
+                let _ = window.hide();
             }
 
             Ok(())
